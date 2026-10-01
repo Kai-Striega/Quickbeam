@@ -7,7 +7,7 @@ break the API.
 
 ## [Unreleased]
 
-## [0.1.0] - Unreleased
+## [0.1.0] - 2026-10-01
 
 First release.
 

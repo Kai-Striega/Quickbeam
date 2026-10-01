@@ -22,4 +22,4 @@ keywords:
   - Python
 # Keep in sync with meson.build; the release workflow checks it.
 version: 0.1.0
-# TODO(release): add date-released (YYYY-MM-DD) when v0.1.0 is tagged.
+date-released: 2026-10-01
