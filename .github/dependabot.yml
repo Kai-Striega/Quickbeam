@@ -1,0 +1,14 @@
+version: 2
+updates:
+  # Actions are pinned to commit SHAs; Dependabot bumps the SHA and version comment.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]
+    cooldown:
+      default-days: 7
+# pixi.lock is not covered by Dependabot; .github/workflows/update-lockfile.yml
+# refreshes it instead.

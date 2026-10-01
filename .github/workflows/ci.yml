@@ -1,0 +1,144 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  FORCE_COLOR: 3
+
+# Environments and tasks are defined under [tool.pixi] in pyproject.toml and
+# locked in pixi.lock; `pixi run <task>` here is what contributors run locally.
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: prefix-dev/setup-pixi@d3f436a425481402e6a95a1d1fc10331c708cd9e # v0.10.2
+        with:
+          pixi-version: v0.81.0
+          environments: lint
+          locked: true
+          cache: true
+      - run: pixi run -e lint lint
+
+  cpp:
+    name: C++ / conda-forge / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm, macos-15, macos-15-intel]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: prefix-dev/setup-pixi@d3f436a425481402e6a95a1d1fc10331c708cd9e # v0.10.2
+        with:
+          pixi-version: v0.81.0
+          environments: default
+          locked: true
+          cache: true
+      - run: pixi run test-cpp
+
+  cpp-system:
+    # conda-forge cannot provide Apple Clang or the distro GCC; these jobs build
+    # with the runner's own compiler, as cibuildwheel does for released wheels.
+    name: C++ / system / ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: Linux GCC, os: ubuntu-24.04, cxx: g++ }
+          - { name: Linux Clang, os: ubuntu-24.04, cxx: clang++ }
+          - { name: macOS Apple Clang, os: macos-15, cxx: clang++ }
+    env:
+      CXX: ${{ matrix.cxx }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: prefix-dev/setup-pixi@d3f436a425481402e6a95a1d1fc10331c708cd9e # v0.10.2
+        with:
+          pixi-version: v0.81.0
+          environments: system
+          locked: true
+          cache: true
+      - run: pixi run -e system test-cpp
+
+  minimum-toolchain:
+    name: C++ / minimum toolchain
+    # TODO(min-toolchain): enable once the minimums are derived. On Linux, run
+    # `pixi run -e min-toolchain test-cpp` (see the commented min-toolchain
+    # feature in pyproject.toml); on macOS, select the minimum Xcode and run
+    # `pixi run -e system test-cpp`.
+    if: false
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+  sanitizers:
+    name: C++ / ASan + UBSan
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: prefix-dev/setup-pixi@d3f436a425481402e6a95a1d1fc10331c708cd9e # v0.10.2
+        with:
+          pixi-version: v0.81.0
+          environments: default
+          locked: true
+          cache: true
+      - run: pixi run test-asan
+
+  clang-tidy:
+    name: C++ / clang-tidy
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: prefix-dev/setup-pixi@d3f436a425481402e6a95a1d1fc10331c708cd9e # v0.10.2
+        with:
+          pixi-version: v0.81.0
+          environments: lint
+          locked: true
+          cache: true
+      - run: pixi run -e lint tidy
+
+  python:
+    name: Python / ${{ matrix.environment }} / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15]
+        environment: [py313, py314, py315, py314t]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: prefix-dev/setup-pixi@d3f436a425481402e6a95a1d1fc10331c708cd9e # v0.10.2
+        with:
+          pixi-version: v0.81.0
+          environments: ${{ matrix.environment }}
+          locked: true
+          cache: true
+      - run: pixi run -e ${{ matrix.environment }} test-py

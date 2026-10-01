@@ -1,0 +1,234 @@
+[build-system]
+build-backend = "mesonpy"
+# nanobind is a build-time dependency of the Python extension only; Meson
+# compiles it from the installed Python package (nanobind.source_dir()).
+requires = ["meson-python>=0.18.0", "meson>=1.5.0", "nanobind>=3.1"]
+
+[project]
+name = "quickbeam"
+dynamic = ["version"]  # read from meson.build
+description = "Micro-benchmarking that explains why code is slow, not just how long it takes."
+readme = "README.md"
+requires-python = ">=3.13"
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
+authors = [{ name = "Kai Striega", email = "me@kaistriega.com" }]
+keywords = ["benchmark", "micro-benchmark", "performance", "hardware counters", "perf"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Operating System :: MacOS",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: C++",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.15",
+  "Programming Language :: Python :: Free Threading :: 1 - Unstable",
+  "Topic :: Software Development :: Testing",
+  "Topic :: System :: Benchmark",
+  "Typing :: Typed",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/Kai-Striega/Quickbeam"
+Documentation = "https://quickbeam.readthedocs.io"
+Source = "https://github.com/Kai-Striega/Quickbeam"
+Issues = "https://github.com/Kai-Striega/Quickbeam/issues"
+Changelog = "https://github.com/Kai-Striega/Quickbeam/blob/main/CHANGELOG.md"
+
+[dependency-groups]
+test = ["pytest>=8.4"]
+docs = ["sphinx>=8.2", "pydata-sphinx-theme>=0.16", "myst-parser>=4.0", "sphinx-design>=0.6"]
+# Everything needed for an editable, no-build-isolation development install.
+dev = [
+  { include-group = "test" },
+  { include-group = "docs" },
+  "meson-python>=0.18.0",
+  "meson>=1.5.0",
+  "nanobind>=3.1",
+  "ninja",
+  "pre-commit",
+]
+
+# --- Build ------------------------------------------------------------------
+
+[tool.meson-python]
+limited-api = true
+
+[tool.meson-python.args]
+# Python builds link the core statically and install only the Python package.
+setup = ["-Dpython=enabled", "-Dtests=disabled", "-Ddefault_library=static"]
+install = ["--tags=python-runtime"]
+
+# --- Wheels -----------------------------------------------------------------
+
+[tool.cibuildwheel]
+# cp313 builds one abi3 wheel per platform that covers 3.13 and later.
+# Free-threaded builds have no stable ABI before 3.15, so each gets its own wheel.
+# cibuildwheel 4 no longer offers 3.13t.
+build = ["cp313-*", "cp314t-*", "cp315t-*"]
+build-frontend = "build"
+build-verbosity = 1
+test-groups = ["test"]
+test-command = "pytest {project}/tests/python"
+
+[tool.cibuildwheel.linux]
+# One native runner per architecture in .github/workflows/wheels.yml.
+archs = ["native"]
+
+[tool.cibuildwheel.macos]
+archs = ["native"]
+# TODO(min-macos): set MACOSX_DEPLOYMENT_TARGET to the oldest macOS whose
+# libc++ supports every C++20 library feature used (floating-point
+# std::to_chars is the likely deciding feature), e.g.
+# environment = { MACOSX_DEPLOYMENT_TARGET = "<version>" }
+
+[[tool.cibuildwheel.overrides]]
+select = "cp31*t-*"
+config-settings = { "setup-args" = "-Dpython.allow_limited_api=false" }
+# TODO(abi3t): from 3.15, free-threaded builds can target the abi3t stable ABI.
+# Drop this override for cp315t once nanobind supports it.
+
+# --- Lint, format, type check, test -----------------------------------------
+
+[tool.ruff]
+target-version = "py313"
+line-length = 88
+
+[tool.ruff.lint]
+extend-select = [
+  "B",    # flake8-bugbear
+  "C4",   # flake8-comprehensions
+  "I",    # isort
+  "PGH",  # pygrep-hooks
+  "PT",   # flake8-pytest-style
+  "PTH",  # flake8-use-pathlib
+  "RET",  # flake8-return
+  "RUF",  # Ruff-specific
+  "SIM",  # flake8-simplify
+  "UP",   # pyupgrade
+  "W",    # pycodestyle warnings
+]
+
+[tool.ruff.lint.per-file-ignores]
+"docs/conf.py" = ["A001"]
+
+[tool.mypy]
+python_version = "3.13"
+mypy_path = "src"
+strict = true
+warn_unreachable = true
+enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
+
+[tool.pytest.ini_options]
+minversion = "8.4"
+testpaths = ["tests/python"]
+addopts = ["-ra", "--strict-config", "--strict-markers", "--import-mode=importlib"]
+xfail_strict = true
+filterwarnings = ["error"]
+log_level = "INFO"
+
+# --- Development environments (pixi) ----------------------------------------
+# pixi provides the toolchain and tasks for development and CI only. Wheels are
+# still built by cibuildwheel against manylinux/macOS system toolchains, and
+# pip users can keep using [dependency-groups].
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["linux-64", "linux-aarch64", "osx-64", "osx-arm64"]
+
+[tool.pixi.dependencies]
+# Catch2 (C++ tests) and nanobind (bindings) come from conda-forge here, and
+# Meson finds them without wraps. Wheel and sdist builds get nanobind from PyPI
+# through [build-system].requires.
+catch2 = "3.*"
+meson = ">=1.5.0"
+meson-python = ">=0.18.0"
+nanobind = ">=3.1"
+ninja = "*"
+pip = "*"
+pkg-config = "*"
+
+[tool.pixi.tasks]
+# Editable install of the Python package. pixi cannot pass meson-python config
+# settings, so this goes through pip; $QUICKBEAM_PIP_ARGS is set per environment.
+install = "python -m pip install --no-build-isolation --no-deps --editable . -Csetup-args=--werror $QUICKBEAM_PIP_ARGS"
+# One build directory per environment, so each keeps its own compiler.
+configure = "meson setup --reconfigure builddir-$PIXI_ENVIRONMENT_NAME -Dtests=enabled --werror"
+build-cpp = { cmd = "meson compile -C builddir-$PIXI_ENVIRONMENT_NAME", depends-on = ["configure"] }
+test-cpp = { cmd = "meson test -C builddir-$PIXI_ENVIRONMENT_NAME --print-errorlogs", depends-on = ["build-cpp"] }
+configure-asan = "meson setup --reconfigure builddir-asan -Dtests=enabled -Dbuildtype=debugoptimized -Db_sanitize=address,undefined -Db_lundef=false --werror"
+test-asan = { cmd = "meson test -C builddir-asan --print-errorlogs", depends-on = ["configure-asan"] }
+
+[tool.pixi.feature.compilers.dependencies]
+cxx-compiler = "*"
+
+[tool.pixi.feature.py313.dependencies]
+python = "3.13.*"
+
+[tool.pixi.feature.py314.dependencies]
+python = "3.14.*"
+
+[tool.pixi.feature.py315]
+# TODO(py315): drop the python_rc label once CPython 3.15.0 final is on conda-forge.
+channels = ["conda-forge/label/python_rc", "conda-forge"]
+
+[tool.pixi.feature.py315.dependencies]
+python = "3.15.*"
+
+[tool.pixi.feature.py314t.dependencies]
+python-freethreading = "3.14.*"
+
+[tool.pixi.feature.py314t.activation.env]
+# No stable ABI on free-threaded CPython before 3.15.
+QUICKBEAM_PIP_ARGS = "-Csetup-args=-Dpython.allow_limited_api=false"
+
+[tool.pixi.feature.test.dependencies]
+pytest = ">=8.4"
+
+[tool.pixi.feature.test.tasks]
+test-py = { cmd = "pytest", depends-on = ["install"] }
+
+[tool.pixi.feature.docs.dependencies]
+sphinx = ">=8.2"
+pydata-sphinx-theme = ">=0.16"
+myst-parser = ">=4.0"
+sphinx-design = ">=0.6"
+
+[tool.pixi.feature.docs.tasks]
+docs = { cmd = "sphinx-build -W --keep-going -b html docs docs/_build/html", depends-on = ["install"] }
+
+[tool.pixi.feature.lint.dependencies]
+# A separate environment from the default compiler, whose Clang version on macOS
+# lags. Keep clang-format in step with the mirrors-clang-format rev in
+# .pre-commit-config.yaml.
+clang-format = "23.1.1.*"
+clang-tools = "23.1.*"
+catch2 = "3.*"
+clangxx = "23.1.*"
+meson = ">=1.5.0"
+ninja = "*"
+pre-commit = "*"
+
+[tool.pixi.feature.lint.tasks]
+lint = "pre-commit run --all-files --show-diff-on-failure"
+# clang-tidy reads compile_commands.json from a Clang-configured build.
+tidy = { cmd = "meson setup --reconfigure builddir-tidy -Dtests=enabled && ninja -C builddir-tidy clang-tidy", env = { CXX = "clang++" } }
+
+# TODO(min-toolchain): once the minimums are derived, add a Linux-only feature
+# pinning them, and an environment for the CI minimum-toolchain job.
+# Apple Clang cannot come from conda-forge; the macOS minimum is tested on the
+# runner's Xcode instead.
+
+[tool.pixi.environments]
+default = { features = ["compilers", "py314", "test", "docs"], solve-group = "py314" }
+system = { features = [] }
+py313 = { features = ["compilers", "py313", "test"] }
+py314 = { features = ["compilers", "py314", "test"], solve-group = "py314" }
+py315 = { features = ["compilers", "py315", "test"] }
+py314t = { features = ["compilers", "py314t", "test"] }
+lint = { features = ["lint"], no-default-feature = true }

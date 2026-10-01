@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: If you use Quickbeam in your work, please cite it using these metadata.
+title: Quickbeam
+type: software
+abstract: >-
+  A C++20 micro-benchmarking library with Python bindings that measures timing
+  distributions and hardware counters to explain why code is slow, not just
+  how long it takes.
+authors:
+  - given-names: Kai
+    family-names: Striega
+    email: me@kaistriega.com
+repository-code: https://github.com/Kai-Striega/Quickbeam
+url: https://quickbeam.readthedocs.io
+license: BSD-3-Clause
+keywords:
+  - benchmarking
+  - micro-benchmarking
+  - performance
+  - hardware counters
+  - C++
+  - Python
+# Keep in sync with meson.build; the release workflow checks it.
+version: 0.1.0
+# TODO(release): add date-released (YYYY-MM-DD) when v0.1.0 is tagged.

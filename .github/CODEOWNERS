@@ -1,0 +1,3 @@
+# Code owners are requested for review automatically on pull requests that
+# touch matching paths. The last matching pattern wins.
+* @Kai-Striega

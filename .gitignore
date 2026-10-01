@@ -1,0 +1,44 @@
+# Meson build directories
+/build*/
+/builddir*/
+.mesonpy-*/
+compile_commands.json
+
+# Meson subprojects: dependencies come from pixi (conda-forge) and PyPI instead
+/subprojects/
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Distributions
+/dist/
+/wheelhouse/
+*.whl
+
+# Docs
+/docs/_build/
+/docs/reference/generated/
+
+# Profiling and benchmark output
+perf.data*
+*.profraw
+*.profdata
+quickbeam-results*.json
+
+# Editors and OS
+.cache/
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+
+# pixi environments
+.pixi/

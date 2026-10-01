@@ -1,0 +1,27 @@
+option(
+  'hardware_counters',
+  type: 'feature',
+  value: 'auto',
+  description: 'Build the hardware counter backend (perf_event on Linux)',
+)
+option(
+  'python',
+  type: 'feature',
+  value: 'disabled',
+  description: 'Build the Python extension module and install the Python package',
+)
+option(
+  'tests',
+  type: 'feature',
+  value: 'auto',
+  description: 'Build the C++ unit tests (requires Catch2 3)',
+)
+option(
+  'validation',
+  type: 'boolean',
+  value: false,
+  description: 'Build the known-answer validation workloads',
+)
+
+# Sanitisers use Meson's built-in option rather than a project option:
+#   meson setup build-asan -Db_sanitize=address,undefined -Db_lundef=false

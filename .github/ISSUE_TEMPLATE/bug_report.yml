@@ -1,0 +1,50 @@
+name: Bug report
+description: Something is wrong, or a measurement looks implausible.
+labels: [bug]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what you got instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproducer
+    attributes:
+      label: Minimal reproducer
+      description: The smallest code that shows the problem, in Python or C++.
+      render: python
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment snapshot
+      # TODO(api): name the exact call that prints the snapshot once it exists.
+      description: >-
+        Paste the environment snapshot Quickbeam prints. It records the CPU,
+        frequency scaling, counter permissions and build flags, and most
+        measurement problems can be diagnosed from it.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Output, traceback or warnings
+      render: text
+  - type: input
+    id: version
+    attributes:
+      label: Quickbeam version
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: interface
+    attributes:
+      label: Interface
+      options: [Python, C++, Both]
+    validations:
+      required: true

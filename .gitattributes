@@ -1,0 +1,2 @@
+# Treat the pixi lockfile as generated (collapsed in GitHub diffs, never merged textually)
+pixi.lock merge=binary linguist-language=YAML linguist-generated=true
