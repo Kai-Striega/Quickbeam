@@ -9,7 +9,8 @@ break the API.
 
 ## [0.1.0] - 2026-10-01
 
-First release.
+First release: a proof of concept that validates the build, packaging and
+release pipeline. It does not include the measurement core.
 
 ### Added
 
