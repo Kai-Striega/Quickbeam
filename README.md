@@ -9,8 +9,9 @@ interpret it. A compiled C++20 core does the measuring; a thin Python layer
 exposes it. The C++ core also works on its own as a benchmarking harness for
 C++ projects.
 
-> **Status:** pre-release. v0.1.0 is under active development and the API is
-> not yet stable.
+> **Status:** early development. The published 0.1.0 is a proof of concept
+> that validates the build and release pipeline; it does not include the
+> measurement core. The first usable release is planned as 0.2.0.
 
 ## Install
 
@@ -28,18 +29,14 @@ dependencies.
 
 ### From C++
 
-Quickbeam builds with Meson and installs a `quickbeam` pkg-config file. In a
-Meson project it can also be used as a subproject:
-
-```meson
-quickbeam_dep = dependency('quickbeam')
-```
+*Coming with the measurement core.* Quickbeam builds with Meson, and the core
+is planned to be usable on its own from C++ projects.
 
 ## Supported platforms
 
 | Platform | Architectures   | Hardware counters |
 | -------- | --------------- | ----------------- |
-| Linux    | x86_64, aarch64 | Yes, via `perf_event` |
+| Linux    | x86_64, aarch64 | Planned, via `perf_event` |
 | macOS    | arm64, x86_64   | Planned           |
 | Windows  | Not supported   | Not supported     |
 

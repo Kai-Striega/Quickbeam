@@ -4,16 +4,16 @@
 
 | OS      | Architectures   | Wheels | Hardware counters      |
 | ------- | --------------- | ------ | ---------------------- |
-| Linux   | x86_64, aarch64 | manylinux, musllinux | Yes, via `perf_event`  |
+| Linux   | x86_64, aarch64 | manylinux, musllinux | Planned, via `perf_event` |
 | macOS   | arm64, x86_64   | Yes    | Planned. TODO(macos-counters) |
 | Windows | –               | No     | –                      |
 
-Windows is out of scope for v0.1.0.
+Windows is out of scope.
 
 On Linux, counter access depends on `/proc/sys/kernel/perf_event_paranoid` and
-on container or VM settings. Quickbeam checks this at runtime and reports it
-in the environment snapshot. Unavailable counters produce a warning, not an
-error.
+on container or VM settings. Once counters are implemented, Quickbeam will
+check this at runtime and report it in the environment snapshot. Unavailable
+counters will produce a warning, not an error.
 
 ## Python
 
@@ -27,8 +27,9 @@ CPython 3.13 and later, following [SPEC 0](https://scientific-python.org/specs/s
 ## Compilers and standard libraries
 
 The minimums are the oldest versions that support every C++20 feature
-Quickbeam uses (concepts, `std::span`, `<bit>`, `<chrono>` and
-floating-point `std::to_chars`), and are tested in CI.
+Quickbeam uses, and are tested in CI from the first core code onwards. The
+core does not exist yet; the features it is expected to use are concepts,
+`std::span`, `<bit>`, `<chrono>` and floating-point `std::to_chars`.
 
 | Toolchain         | Minimum version          |
 | ----------------- | ------------------------ |
